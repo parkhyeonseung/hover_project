@@ -1,0 +1,14 @@
+<launch>
+
+    <arg name = "hover" default = "hover"/>
+    <arg name = "hover_port" default = "/dev/ttyMEGA"/>
+    <arg name = "imu_port" default = "/dev/ttyIMU"/>
+
+    <node pkg = "hover_joy" type = "rosmaster_main.py" name = "rosmaster_main" output = "screen">
+        <param name="hover" value = "$(arg hover)"/>
+        <param name="hover_port" value = "$(arg hover_port)"/>
+        <param name = "imu_port" value = "$(arg imu_port)"/>
+    </node>
+    
+
+</launch>

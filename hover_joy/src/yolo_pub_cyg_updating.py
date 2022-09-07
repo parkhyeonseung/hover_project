@@ -3,15 +3,16 @@
 import rospy
 from sensor_msgs.msg import Joy
 from hover_joy.msg import arraymsg
-from ardu_serial import Ardu
+from std_msgs.msg import String
+# from ardu_serial import Ardu
 import threading
-from multiprocessing import Process
 # v 8_31  joystick,yolo follow
 joy = False
 yolo = False
 class joystick:
     def __init__(self):
-        self.hover = Ardu()
+        global yolo, joy
+        # self.hover = Ardu()
         self.sp = '00'
         self.st = '00'
         self.x = None
@@ -22,16 +23,17 @@ class joystick:
         self.st_speed_prev = 0
         self.turn_left = 0.4
         self.turn_right = 0.6
-        self.speed_low = 0.4
-        self.speed_high = 0.7
+        self.speed_low = 0.3
+        self.speed_high = 0.6
         self.sp = 'g0'
         self.st = 't0'
-        self.hover.input('00')
+        self.pub_data = '0000'
+        self.pub = rospy.Publisher('hover_command',String,queue_size=1)
         print('done')
         
     def joy_func(self):
         global yolo, joy
-        rospy.Subscriber('joy',Joy,self.buttoncallback,queue_size=1)
+        rospy.Subscriber('joy',Joy,self.buttoncallback)
         
     def yolo_func(self):
         global yolo,joy
@@ -53,34 +55,32 @@ class joystick:
                        A, B, '',X, Y, '','',R1,'',R2
             '''
         if joy_data.buttons[1] == 1:   ## B stop
-            self.hover.input('00')
-            self.hover.input('00')
             print('stop')
+            self.pub_data = '0000'
             joy = False
             yolo = False
         elif joy_data.buttons[0] == 1:   ## A mode joy
-            self.hover.input('00')
-            self.hover.input('00')
             print('joy')
+            self.pub_data = '0000'
             joy = True
             yolo = False
         elif joy_data.buttons[3] == 1:   # X mode yolo
-            self.hover.input('00')
-            self.hover.input('00')
             print('yolo')
+            self.pub_data = '0000'
             joy = False
             yolo = True
             
         if joy == True:
             x_data =  ( (round(joy_data.axes[1],1))*10 ) 
             y_data =  ( (round(joy_data.axes[0],1))*10 ) *-1
-            x_data = 'g'+str(int(x_data*30))
+            x_data = 'g'+str(int(x_data*15))
             y_data = 't'+str(int(y_data*30))
             if (joy_data.axes[1] ==0) and (joy_data.axes[0] ==0) :
-                x_data = 's0'
-                y_data = 's0'
-            self.hover.input(x_data)
-            self.hover.input(y_data)  
+                x_data = 's00'
+                y_data = 's00'
+            self.pub_data = x_data+y_data
+        self.pub.publish(self.pub_data)
+              
         
     def yolocallback(self,xywh):
         global yolo, joy
@@ -88,8 +88,7 @@ class joystick:
         if yolo == True:
             xywh = xywh.data
             if xywh[0] == 10.:
-                self.hover.input('s0')
-                self.hover.input('s0')
+                self.pub_data = 's0s0'
                 self.sp_speed_prev =0
             else:
                 area_per = xywh[2] * xywh[3] * 10  ## 0~
@@ -126,8 +125,6 @@ class joystick:
                     ''' steer 0'''
                     self.st = 't0' 
                 
-                self.hover.input(self.st)
-                    
                 if self.speed_low <= area_per <= self.speed_high:
                     ''' speed 0'''
                     self.sp = 'g' + '0'
@@ -136,15 +133,16 @@ class joystick:
                     self.sp = 'b' + '-90'
                 elif  area_per < self.speed_low :
                     ''' go up'''
-                    self.sp = 'g' +str(sp_speed+50)
+                    self.sp = 'g' +str(sp_speed+10)
                     
-                self.hover.input(self.sp)
+                self.pub_data = self.sp+self.st
+                
+            self.pub.publish(self.pub_data)
         else :
-            self.hover.input('00')
             return
 
 if __name__ == "__main__":
-    rospy.init_node('hover_joy_demo_done')
+    rospy.init_node('joy_yolo_sub')
     joy_ins = joystick()
     th1 = threading.Thread(target = joy_ins.joy_func())
     th2 = threading.Thread(target = joy_ins.yolo_func())
@@ -154,12 +152,8 @@ if __name__ == "__main__":
         th1.join()
         th2.join()
         rospy.spin()
-    except KeyboardInterrupt:
-        joy.hover.input('00')
-        joy.hover.close()
     except :
-        joy.hover.input('00')
-        joy.hover.close()
+        pass
         
         
             

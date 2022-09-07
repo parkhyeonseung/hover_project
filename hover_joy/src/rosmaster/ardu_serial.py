@@ -7,11 +7,17 @@ import os,sys
 class Ardu():
     def __init__(self,port = "/dev/ttyMEGA",baudrate = 115200):
         self.port = port
-        self.stop = '00'
-        self.data = '00'
+        self.stop = '00q'
+        self.data = '00q'
+        self.su_port = "sudo chmod +777 "+port
+        os.system(self.su_port)
         try : self.ser = serial.Serial(port =self.port, baudrate = baudrate)
         except : 
             print('port error ')
+            self.port = input('port : ')
+            os.system(self.su_port)
+            self.ser = serial.Serial(port =self.port, baudrate = baudrate)
+            
         
     def read(self):
         return self.ser.read()
@@ -21,7 +27,7 @@ class Ardu():
             self.data = data
             try :
                 self.ser.write(self.data.encode('utf-8'))
-                time.sleep(0.2)
+                time.sleep(0.1)
                 return True
                 
                 
@@ -40,7 +46,7 @@ class Ardu():
         
     def close(self):
         self.ser.close()
-        time.sleep(0.2)
+        time.sleep(0.1)
 
 
 

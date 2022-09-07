@@ -1,0 +1,7 @@
+<launch>
+
+    <node pkg = "joy" type = "joy_node" name = "joy_node"/>
+
+    <node pkg = "hover_joy" type = "joy_yolo_demo2.py" name = "hover_joy_demo_done" output = "screen"/>
+
+</launch>

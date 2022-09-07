@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   rospy
   message_generation
+  roslaunch
   )
 
 ## System dependencies are found with CMake's conventions
@@ -50,6 +51,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   arraymsg.msg
+  stringarraymsg.msg
 #   Message1.msg
 #   Message2.msg
 )

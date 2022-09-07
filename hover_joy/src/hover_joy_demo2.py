@@ -148,6 +148,8 @@ if __name__ == "__main__":
     joy_ins = joystick()
     th1 = threading.Thread(target = joy_ins.joy_func())
     th2 = threading.Thread(target = joy_ins.yolo_func())
+    # th1 = Process(target = joy_ins.yolo_func())
+    # th2 = Process(target = joy_ins.joy_func())
     try : 
         th1.start()
         th2.start()
