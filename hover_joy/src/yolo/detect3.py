@@ -11,7 +11,7 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import platform
-
+import tensorrt as trt
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
@@ -25,14 +25,13 @@ from utils.general import (LOGGER, check_file, check_img_size, check_imshow, che
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
 
-
 @torch.no_grad()
 def run(
         weights='yolov5s.pt',  # model.pt path(s)
         source='0',  # file/dir/URL/glob, 0 for webcam
 ):
     data=ROOT / 'data/coco128.yaml'  # dataset.yaml path
-    imgsz=(200, 200)  # inference size (height, width)
+    imgsz=(320, 320)  # inference size (height, width)
     conf_thres=0.25  # confidence threshold
     iou_thres=0.45  # NMS IOU threshold
     max_det=1000  # maximum detections per image
@@ -59,10 +58,11 @@ def run(
     # Load model
     print(weights)
     device = select_device(device)
+    trt.init_libnvinfer_plugins(None,'')
     model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half)
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
-
+    print(imgsz)
     # Dataloader
     if webcam:
         view_img = check_imshow()

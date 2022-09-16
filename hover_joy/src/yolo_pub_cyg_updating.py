@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # encoding: utf-8
+from concurrent.futures import process
 import rospy
 from sensor_msgs.msg import Joy
 from hover_joy.msg import arraymsg
 from std_msgs.msg import String
 # from ardu_serial import Ardu
 import threading
+from multiprocessing import Process
 # v 8_31  joystick,yolo follow
 joy = False
 yolo = False
@@ -144,8 +146,10 @@ class joystick:
 if __name__ == "__main__":
     rospy.init_node('joy_yolo_sub')
     joy_ins = joystick()
-    th1 = threading.Thread(target = joy_ins.joy_func())
-    th2 = threading.Thread(target = joy_ins.yolo_func())
+    # th1 = threading.Thread(target = joy_ins.joy_func())
+    # th2 = threading.Thread(target = joy_ins.yolo_func())
+    th1 = Process(target = joy_ins.joy_func())
+    th2 = Process(target = joy_ins.yolo_func())
     try : 
         th1.start()
         th2.start()
