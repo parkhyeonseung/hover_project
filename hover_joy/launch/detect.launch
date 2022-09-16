@@ -1,0 +1,9 @@
+<launch>
+
+    <node pkg = "hover_joy" type = "detect3.py" name = "detect3" output = "screen">
+        <param name="weights" value = "yolov5s.pt"/>
+        <param name="source" value = "0"/>
+    </node>
+
+</launch>
+
