@@ -35,7 +35,8 @@ def run(
     conf_thres=0.25  # confidence threshold
     iou_thres=0.45  # NMS IOU threshold
     max_det=1000  # maximum detections per image
-    device='cuda:0'  # cuda device, i.e. 0 or 0,1,2,3 or cpu
+    #device='cuda:0'
+    device=''# cuda device, i.e. 0 or 0,1,2,3 or cpu
     view_img=False # show results
     save_crop=False # save cropped prediction boxes
     classes=None  # filter by class: --class 0, or --class 0 2 3

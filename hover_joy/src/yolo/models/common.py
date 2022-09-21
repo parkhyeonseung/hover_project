@@ -10,7 +10,7 @@ import warnings
 from collections import OrderedDict, namedtuple
 from copy import copy
 from pathlib import Path
-
+import ctypes
 import cv2
 import numpy as np
 import pandas as pd
@@ -380,8 +380,11 @@ class DetectMultiBackend(nn.Module):
             check_version(trt.__version__, '7.0.0', hard=True)  # require tensorrt>=7.0.0
             if device.type == 'cpu':
                 device = torch.device('cuda:0')
+            
+            handle = ctypes.CDLL("/home/nano2/hover_ws/src/hover_joy/src/yolo/models/libmyplugins.so", mode=ctypes.RTLD_GLOBAL)
             Binding = namedtuple('Binding', ('name', 'dtype', 'shape', 'data', 'ptr'))
             logger = trt.Logger(trt.Logger.INFO)
+            trt.init_libnvinfer_plugins(logger,"")
             with open(w, 'rb') as f, trt.Runtime(logger) as runtime:
                 model = runtime.deserialize_cuda_engine(f.read())
             context = model.create_execution_context()
@@ -400,6 +403,7 @@ class DetectMultiBackend(nn.Module):
                 shape = tuple(context.get_binding_shape(index))
                 im = torch.from_numpy(np.empty(shape, dtype=dtype)).to(device)
                 bindings[name] = Binding(name, dtype, shape, im, int(im.data_ptr()))
+            print(bindings['data'])
             binding_addrs = OrderedDict((n, d.ptr) for n, d in bindings.items())
             batch_size = bindings['images'].shape[0]  # if dynamic, this is instead max batch size
         elif coreml:  # CoreML
