@@ -380,8 +380,11 @@ class DetectMultiBackend(nn.Module):
             check_version(trt.__version__, '7.0.0', hard=True)  # require tensorrt>=7.0.0
             if device.type == 'cpu':
                 device = torch.device('cuda:0')
+<<<<<<< HEAD
             
             handle = ctypes.CDLL("/home/nano2/hover_ws/src/hover_joy/src/yolo/models/libmyplugins.so", mode=ctypes.RTLD_GLOBAL)
+=======
+>>>>>>> 07f09e67ab305ab7e0a0a4f29d4826e8ad8e0247
             Binding = namedtuple('Binding', ('name', 'dtype', 'shape', 'data', 'ptr'))
             logger = trt.Logger(trt.Logger.INFO)
             trt.init_libnvinfer_plugins(logger,"")
@@ -403,7 +406,10 @@ class DetectMultiBackend(nn.Module):
                 shape = tuple(context.get_binding_shape(index))
                 im = torch.from_numpy(np.empty(shape, dtype=dtype)).to(device)
                 bindings[name] = Binding(name, dtype, shape, im, int(im.data_ptr()))
+<<<<<<< HEAD
             print(bindings['data'])
+=======
+>>>>>>> 07f09e67ab305ab7e0a0a4f29d4826e8ad8e0247
             binding_addrs = OrderedDict((n, d.ptr) for n, d in bindings.items())
             batch_size = bindings['images'].shape[0]  # if dynamic, this is instead max batch size
         elif coreml:  # CoreML
