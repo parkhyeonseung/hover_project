@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # encoding: utf-8
+
+#### import rospy jover_joy.msg 
 import rospy
 from hover_joy.msg import arraymsg
+#####
 import argparse
 import os
 import platform
@@ -30,54 +33,54 @@ def run(
         source='0',  # file/dir/URL/glob/screen/0(webcam)
         data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
         imgsz=(640, 640),  # inference size (height, width)
-        conf_thres=0.25,  # confidence threshold
-        iou_thres=0.45,  # NMS IOU threshold
-        max_det=1000,  # maximum detections per image
+        conf_thres=0.25,  
+        iou_thres=0.45, 
+        max_det=1000, 
         device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
-        view_img=False,  # show results
-        save_txt=False,  # save results to *.txt
-        save_conf=False,  # save confidences in --save-txt labels
-        save_crop=False,  # save cropped prediction boxes
-        nosave=False,  # do not save images/videos
-        classes=None,  # filter by class: --class 0, or --class 0 2 3
-        agnostic_nms=False,  # class-agnostic NMS
-        augment=False,  # augmented inference
-        visualize=False,  # visualize features
-        update=False,  # update all models
-        project=ROOT / 'runs/detect',  # save results to project/name
-        name='exp',  # save results to project/name
-        exist_ok=False,  # existing project/name ok, do not increment
-        line_thickness=3,  # bounding box thickness (pixels)
-        hide_labels=False,  # hide labels
-        hide_conf=False,  # hide confidences
-        half=False,  # use FP16 half-precision inference
-        dnn=False,  # use OpenCV DNN for ONNX inference
-        vid_stride=1,  # video frame-rate stride
+        view_img=False,  
+        save_txt=False, 
+        save_conf=False,  
+        save_crop=False,  
+        nosave=False,  
+        classes=None,  
+        agnostic_nms=False, 
+        augment=False, 
+        visualize=False, 
+        update=False,  
+        project=ROOT / 'runs/detect', 
+        name='exp',  
+        exist_ok=False,  
+        line_thickness=3,  
+        hide_labels=False,  
+        hide_conf=False, 
+        half=False,  
+        dnn=False, 
+        vid_stride=1,  
 ):
     weights = ROOT / weights
-    pub_yolo = rospy.Publisher('yolo',arraymsg,queue_size=1)
-    yolo_data = arraymsg()
-    counts_no_cup = 0
-    target='cup'
+    pub_yolo = rospy.Publisher('yolo',arraymsg,queue_size=1) ## produce publisher instance
+    yolo_data = arraymsg()  ## produce msg instance
+    counts_no_cup = 0       ## if cup is none in frame, counts var
+    target='cup'            ## target 
     source = str(source)
-    save_img = not nosave and not source.endswith('.txt')  # save inference images
+    save_img = not nosave and not source.endswith('.txt')  
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
     is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
     webcam = source.isnumeric() or source.endswith('.txt') or (is_url and not is_file)
     screenshot = source.lower().startswith('screen')
     if is_url and is_file:
-        source = check_file(source)  # download
+        source = check_file(source)  
 
     # Directories
-    save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
-    (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
+    save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  
+    (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  
 
     # Load model
     device = select_device(device)
     model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half)
     stride, names, pt = model.stride, model.names, model.pt
-    imgsz = check_img_size(imgsz, s=stride)  # check image size
-
+    imgsz = check_img_size(imgsz, s=stride)  
+    
     # Dataloader
     bs = 1  # batch_size
     if webcam:
@@ -91,7 +94,7 @@ def run(
     vid_path, vid_writer = [None] * bs, [None] * bs
 
     # Run inference
-    model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
+    model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
@@ -99,7 +102,7 @@ def run(
             im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
             im /= 255  # 0 - 255 to 0.0 - 1.0
             if len(im.shape) == 3:
-                im = im[None]  # expand for batch dim
+                im = im[None]  
 
         # Inference
         with dt[1]:
@@ -110,9 +113,7 @@ def run(
         with dt[2]:
             pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
 
-        # Second-stage classifier (optional)
-        # pred = utils.general.apply_classifier(pred, classifier_model, im, im0s)
-
+        
         # Process predictions
         for i, det in enumerate(pred):  # per image
             seen += 1
@@ -123,25 +124,23 @@ def run(
                 p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
 
             p = Path(p)  # to Path
-            save_path = str(save_dir / p.name)  # im.jpg
+            save_path = str(save_dir / p.name)  
             txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
-            s += '%gx%g ' % im.shape[2:]  # print string
-            gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
-            imc = im0.copy() if save_crop else im0  # for save_crop
+            s += '%gx%g ' % im.shape[2:]  
+            gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  
+            imc = im0.copy() if save_crop else im0  
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             labels = ''
             if len(det):
-                # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
 
-                # Print results
                 for c in det[:, 5].unique():
-                    n = (det[:, 5] == c).sum()  # detections per class
-                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+                    n = (det[:, 5] == c).sum() 
+                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
-                    xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                    xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  
                     c = int(cls)  # integer class
                     label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                     labels+=label
@@ -156,7 +155,7 @@ def run(
                             counts_no_cup = 0
 
                             if save_crop or view_img:  # Add bbox to image
-                                c = int(cls)  # integer class
+                                c = int(cls)  
                                 label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                                 annotator.box_label(xyxy, label, color=colors(c, True))
 
@@ -167,7 +166,7 @@ def run(
             if view_img:
                 if platform.system() == 'Linux' and p not in windows:
                     windows.append(p)
-                    cv2.namedWindow(str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)  # allow window resize (Linux)
+                    cv2.namedWindow(str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)  
                     cv2.resizeWindow(str(p), im0.shape[1], im0.shape[0])
                 cv2.imshow(str(p), im0)
                 cv2.waitKey(1)  # 1 millisecond

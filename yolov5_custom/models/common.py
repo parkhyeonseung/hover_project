@@ -386,7 +386,7 @@ class DetectMultiBackend(nn.Module):
             LOGGER.info(f'Loading {w} for TensorRT inference...')
             import tensorrt as trt  # https://developer.nvidia.com/nvidia-tensorrt-download
             check_version(trt.__version__, '7.0.0', hard=True)  # require tensorrt>=7.0.0
-            ctypes.CDLL("/root/catkin_ws/src/hover_joy/src/yolov5/libmyplugins.so")
+            ctypes.CDLL("/root/catkin_ws/src/hover_joy/src/yolov5/libmyplugins.so")  ## add tensorrt plugin
             if device.type == 'cpu':
                 device = torch.device('cuda:0')
             Binding = namedtuple('Binding', ('name', 'dtype', 'shape', 'data', 'ptr'))
