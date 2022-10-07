@@ -1,0 +1,9 @@
+<launch>
+    <!-- 启动base.launch文件 -->
+    <!-- Launch the base.launch file -->
+    <include file="$(find hover_joy)/launch/base.launch"/>
+    <node name='joy' pkg="joy" type="joy_node" output="screen"/>
+    <!-- 启动激光雷达跟随节点 -->
+    <!-- Activate lidar follow node -->
+    <node name='laser_Tracker' pkg="hover_joy" type="laser_follow.py" required="true" output="screen"/>
+</launch>
