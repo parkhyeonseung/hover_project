@@ -57,6 +57,7 @@ def run(
     weights = ROOT / weights
     pub_yolo = rospy.Publisher('yolo',arraymsg,queue_size=1)
     yolo_data = arraymsg()
+    yolo_data.data=[10.,0.,0.,0.]
     counts_no_cup = 0
     target='person'
     source = str(source)
@@ -145,23 +146,22 @@ def run(
                     c = int(cls)  # integer class
                     label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                     labels+=label
-                    if counts_no_cup >=5:
+                    if counts_no_cup >=10:
                         yolo_data.data = [10.,0.,0.,0.]
-                        pub_yolo.publish(yolo_data)
                         counts_no_cup =0
                     else:
                         if target in label:
                             yolo_data.data = xywh
-                            pub_yolo.publish(yolo_data)
                             counts_no_cup = 0
 
                             if save_crop or view_img:  # Add bbox to image
                                 c = int(cls)  # integer class
                                 label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                                 annotator.box_label(xyxy, label, color=colors(c, True))
-
-                if target not in labels:
-                    counts_no_cup+=1
+            
+            pub_yolo.publish(yolo_data)
+            if target not in labels:
+                counts_no_cup+=1
             # Stream results
             im0 = annotator.result()
             if view_img:

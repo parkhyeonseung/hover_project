@@ -3,7 +3,8 @@
     <node pkg = "joy" type = "joy_node" name = "joy_node"/>
 
     <include file="$(find hover_joy)/launch/base.launch"/>
-    <include file="$(find hover_joy)/launch/detect_no_vision_up.launch"/>
+    <!-- <include file="$(find hover_joy)/launch/detect_no_vision_jetbot.launch"/> -->
+    <include file="$(find hover_joy)/launch/detect_jetbot.launch"/>
 
     <node pkg = "hover_joy" type = "jetbot_command_updating.py" name = "jetbot_command_updating" output = "screen"/>
 

@@ -53,7 +53,8 @@ def run(
     pub_yolo = rospy.Publisher('yolo',arraymsg,queue_size=1)
     yolo_data = arraymsg()
     counts_no_cup = 0
-    yolo_data.data=[10.,0.,0.,0.]
+    xywh = [10.,10.]
+    yolo_data.data=[10.,10.]
 
     source = str(source)
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
@@ -88,7 +89,7 @@ def run(
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
     # target = input('target : ')
-    target = 'cup'
+    target = 'person'
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
@@ -138,16 +139,19 @@ def run(
                     label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                     labels+=label
                     if target not in label:
-                        if counts_no_cup >=10:
-                            yolo_data.data = [10.,0.,0.,0.]
-                            counts_no_cup =0
+                        yolo_data.data = [10.,counts_no_cup]
+                        
                     else:
-                        yolo_data.data = xywh
                         counts_no_cup =0
+                        yolo_data.data = [xywh[0],counts_no_cup]
                 
-            pub_yolo.publish(yolo_data)
             if target not in labels:
                     counts_no_cup +=1
+            if counts_no_cup >=10:
+                yolo_data.data = [10.,10.]
+                counts_no_cup =0
+            pub_yolo.publish(yolo_data)
+            
     print('done')
 
 

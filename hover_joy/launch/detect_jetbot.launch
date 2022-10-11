@@ -1,0 +1,9 @@
+<launch>
+
+    <node pkg = "hover_joy" type = "detect_jetbot.py" name = "detect_jetbot" output = "screen">
+        <param name="weights" value = "yolov5s.engine"/>
+        <param name="source" value = "0"/>
+    </node>
+
+</launch>
+

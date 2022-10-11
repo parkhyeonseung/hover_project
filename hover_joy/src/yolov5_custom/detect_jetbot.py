@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # encoding: utf-8
-
+import rospy
+from hover_joy.msg import arraymsg
 import argparse
 import os
 import platform
 import sys
 from pathlib import Path
-import rospy
-from hover_joy.msg import arraymsg
+
 import torch
 
 FILE = Path(__file__).resolve()
@@ -26,23 +26,28 @@ from utils.torch_utils import select_device, smart_inference_mode
 
 @smart_inference_mode()
 def run(
-        weights=ROOT / 'yolov5s.engine',
+        weights=ROOT / 'yolov5s.engine',  # model path or triton URL
         source='0',  # file/dir/URL/glob/screen/0(webcam)
-        project=ROOT / 'runs/detect',
-        name='exp',
-        device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
         data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
         imgsz=(640, 640),  # inference size (height, width)
         conf_thres=0.25,  # confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
         max_det=1000,  # maximum detections per image
+        device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
+        view_img=False,  # show results
         save_txt=False,  # save results to *.txt
+        save_conf=False,  # save confidences in --save-txt labels
+        save_crop=False,  # save cropped prediction boxes
         nosave=False,  # do not save images/videos
         classes=None,  # filter by class: --class 0, or --class 0 2 3
         agnostic_nms=False,  # class-agnostic NMS
         augment=False,  # augmented inference
         visualize=False,  # visualize features
+        update=False,  # update all models
+        project=ROOT / 'runs/detect',  # save results to project/name
+        name='exp',  # save results to project/name
         exist_ok=False,  # existing project/name ok, do not increment
+        line_thickness=3,  # bounding box thickness (pixels)
         hide_labels=False,  # hide labels
         hide_conf=False,  # hide confidences
         half=False,  # use FP16 half-precision inference
@@ -52,10 +57,12 @@ def run(
     weights = ROOT / weights
     pub_yolo = rospy.Publisher('yolo',arraymsg,queue_size=1)
     yolo_data = arraymsg()
+    xywh = [10.,10.]
+    yolo_data.data=[10.,10.]
     counts_no_cup = 0
-    yolo_data.data=[10.,0.,0.,0.]
-
+    target='person'
     source = str(source)
+    save_img = not nosave and not source.endswith('.txt')  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
     is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
     webcam = source.isnumeric() or source.endswith('.txt') or (is_url and not is_file)
@@ -83,12 +90,11 @@ def run(
         dataset = LoadScreenshots(source, img_size=imgsz, stride=stride, auto=pt)
     else:
         dataset = LoadImages(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride)
+    vid_path, vid_writer = [None] * bs, [None] * bs
 
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
-    # target = input('target : ')
-    target = 'cup'
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
@@ -113,14 +119,18 @@ def run(
         for i, det in enumerate(pred):  # per image
             seen += 1
             if webcam:  # batch_size >= 1
-                p, im0, _ = path[i], im0s[i].copy(), dataset.count
+                p, im0, frame = path[i], im0s[i].copy(), dataset.count
                 s += f'{i}: '
             else:
-                p, im0, _ = path, im0s.copy(), getattr(dataset, 'frame', 0)
+                p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
 
             p = Path(p)  # to Path
+            save_path = str(save_dir / p.name)  # im.jpg
+            txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
             s += '%gx%g ' % im.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
+            imc = im0.copy() if save_crop else im0  # for save_crop
+            annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             labels = ''
             if len(det):
                 # Rescale boxes from img_size to im0 size
@@ -138,18 +148,32 @@ def run(
                     label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                     labels+=label
                     if target not in label:
-                        if counts_no_cup >=10:
-                            yolo_data.data = [10.,0.,0.,0.]
-                            counts_no_cup =0
+                        yolo_data.data = [10.,counts_no_cup]
                     else:
-                        yolo_data.data = xywh
                         counts_no_cup =0
-                
-            pub_yolo.publish(yolo_data)
-            if target not in labels:
-                    counts_no_cup +=1
-    print('done')
+                        yolo_data.data = [xywh[0],counts_no_cup]
 
+                        if save_crop or view_img:  # Add bbox to image
+                            c = int(cls)  # integer class
+                            label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
+                            annotator.box_label(xyxy, label, color=colors(c, True))
+            
+            if target not in labels:
+                if counts_no_cup <10:
+                    counts_no_cup+=1
+            if counts_no_cup >=10:
+                yolo_data.data = [10.,10.]
+            pub_yolo.publish(yolo_data)
+            
+            # Stream results
+            im0 = annotator.result()
+            if view_img:
+                if platform.system() == 'Linux' and p not in windows:
+                    windows.append(p)
+                    cv2.namedWindow(str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)  # allow window resize (Linux)
+                    cv2.resizeWindow(str(p), im0.shape[1], im0.shape[0])
+                cv2.imshow(str(p), im0)
+                cv2.waitKey(1)  # 1 millisecond
 
 def main(weights,source):
     check_requirements(exclude=('tensorboard', 'thop'))
@@ -158,7 +182,6 @@ def main(weights,source):
     except KeyboardInterrupt:
         # print('main')
         raise StopIteration
-
 
 if __name__ == "__main__":
     rospy.init_node('yolo_detect')

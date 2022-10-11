@@ -58,7 +58,7 @@ class Yolo:
                     self.in_middle = 't'
                     self.st = 't0' 
                     
-                self.pub_data = self.detect+ self.prev_detect + self.in_middle+ self.prev_in_middle + self.st
+            self.pub_data = self.detect+ self.prev_detect + self.in_middle+ self.prev_in_middle + self.st
                 
             self.pub.publish(self.pub_data)
             self.prev_in_middle = self.in_middle
