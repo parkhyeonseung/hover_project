@@ -1,0 +1,9 @@
+<launch>
+
+    <node pkg = "joy" type = "joy_node" name = "joy_node"/>
+
+    <node pkg = "hover_joy" type = "yolo_pub_cyg_updating.py" name = "yolo_pub_cyg_updating" output = "screen"/>
+
+    <node pkg = "hover_joy" type = "cyg_read_sub_updating.py" name = "cyg_read_sub_updating" output = "screen"/>
+
+</launch>

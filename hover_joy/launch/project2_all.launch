@@ -1,0 +1,13 @@
+<launch>
+
+    <node pkg = "joy" type = "joy_node" name = "joy_node"/>
+
+    <node pkg = "hover_joy" type = "yolo_sub_demo1.py" name = "yolo_sub_demo1" output = "screen"/>
+
+    <node pkg = "hover_joy" type = "joy_sub_demo1.py" name = "joy_sub_demo1" output = "screen"/>
+
+    <node pkg = "hover_joy" type = "lidar_hover_demo1.py" name = "lidar_hover_demo1" output = "screen"/>
+
+    <node pkg = "hover_joy" type = "cyg_read_demo1.py" name = "cyg_read_demo1" output = "screen"/>
+
+</launch>
