@@ -38,8 +38,7 @@ class Ardu():
             print('check your port')
             return False
         
-    def close_all(self):
-        self.ser.input(self.stop)
+    def close(self):
         self.ser.close()
         time.sleep(0.2)
 

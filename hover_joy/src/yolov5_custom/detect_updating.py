@@ -114,6 +114,7 @@ def run(
 
         # Second-stage classifier (optional)
         # pred = utils.general.apply_classifier(pred, classifier_model, im, im0s)
+
         # Process predictions
         for i, det in enumerate(pred):  # per image
             seen += 1
@@ -145,27 +146,24 @@ def run(
                     xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                     c = int(cls)  # integer class
                     label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                ## 1 start
                     labels+=label
                     if target not in label:
                         yolo_data.data = [10.,counts_no_cup]
                     else:
                         counts_no_cup =0
                         yolo_data.data = [xywh[0],counts_no_cup]
-                        
-                ## 1 end
+
                         if save_crop or view_img:  # Add bbox to image
                             c = int(cls)  # integer class
                             label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                             annotator.box_label(xyxy, label, color=colors(c, True))
-            ## 2 start
+            
             if target not in labels:
                 if counts_no_cup <10:
                     counts_no_cup+=1
             if counts_no_cup >=10:
                 yolo_data.data = [10.,10.]
             pub_yolo.publish(yolo_data)
-            ## 2 end
             
             # Stream results
             im0 = annotator.result()

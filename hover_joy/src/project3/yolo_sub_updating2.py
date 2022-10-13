@@ -3,7 +3,7 @@
 import rospy
 from hover_joy.msg import arraymsg
 from std_msgs.msg import String
-from joy_sub_updating import Joystick
+from joy_sub_updating2 import Joystick
 
 class Yolo:
     def __init__(self):
