@@ -3,8 +3,8 @@
 from ardu_serial import Ardu
 import rospy
 from std_msgs.msg import String
-from cyg_sub_updating import Lidar
-from joy_sub_updating import Joystick
+from cyg_sub_updating2 import Lidar
+from joy_sub_updating2 import Joystick
 class Command ():
     def __init__(self):
         self.mega = Ardu(port='/dev/ttyMEGA')
@@ -26,7 +26,7 @@ class Command ():
             else:
                 self.x_data = joy_data[0:2]
                 self.y_data = joy_data[2:]
-        else:
+        else: 
             yolo_data = c_data.data
             detect = yolo_data[0]
             prev_detect = yolo_data[1]
@@ -35,16 +35,17 @@ class Command ():
             
             if detect == 't':
                 if in_middle == 't':
-                    if 1.5<self.lidar.minDist <2:
+                    if 0.6<self.lidar.minDist <1:          ###### stop
                         self.x_data = 0
-                    elif self.lidar.minDist>=2:
+                    elif self.lidar.minDist>=1:            ###### front
                         self.x_data = int(self.lidar.minDist*40)
-                    elif self.lidar.minDist <=1.5:
+                    elif self.lidar.minDist <=0.6:         ###### back
                         self.x_data = -90
                         
                     self.prev_x_data = int(self.x_data * 0.6)
                     self.y_data = 0
                 else:
+                    print("detect_else")
                     if prev_in_middle == 't':
                         self.x_data = self.prev_x_data
                     else:

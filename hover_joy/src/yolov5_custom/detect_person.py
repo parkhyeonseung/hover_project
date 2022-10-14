@@ -2,7 +2,7 @@
 # encoding: utf-8
 import rospy
 from hover_joy.msg import arraymsg
-import argparse
+import numpy as np
 import os
 import platform
 import sys
@@ -114,6 +114,7 @@ def run(
 
         # Second-stage classifier (optional)
         # pred = utils.general.apply_classifier(pred, classifier_model, im, im0s)
+        
         # Process predictions
         for i, det in enumerate(pred):  # per image
             seen += 1
@@ -131,6 +132,7 @@ def run(
             imc = im0.copy() if save_crop else im0  # for save_crop
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             labels = ''
+            person = []
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
@@ -147,11 +149,9 @@ def run(
                     label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                 ## 1 start
                     labels+=label
-                    if target not in label:
-                        yolo_data.data = [10.,counts_no_cup]
-                    else:
+                    if target in label:
+                        person.append(xywh[0])
                         counts_no_cup =0
-                        yolo_data.data = [xywh[0],counts_no_cup]
                         
                 ## 1 end
                         if save_crop or view_img:  # Add bbox to image
@@ -159,12 +159,26 @@ def run(
                             label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                             annotator.box_label(xyxy, label, color=colors(c, True))
             ## 2 start
+            if len(person)!= 0:
+                persons = np.array(person)
+                print(persons)
+                persons_scale = abs(persons-0.5)
+                min_val = min(persons_scale)
+                min_index = np.where(persons_scale==min_val)[0][0]
+                target_val = persons[min_index]
+                yolo_data.data = [target_val,counts_no_cup]
+            else:
+                yolo_data.data = [10.,counts_no_cup]
+                
+            if counts_no_cup >=10:
+                yolo_data.data = [10.,10.]
+                
+            pub_yolo.publish(yolo_data)
+            
             if target not in labels:
                 if counts_no_cup <10:
                     counts_no_cup+=1
-            if counts_no_cup >=10:
-                yolo_data.data = [10.,10.]
-            pub_yolo.publish(yolo_data)
+                    
             ## 2 end
             
             # Stream results

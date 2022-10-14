@@ -2,12 +2,14 @@
 
     <node pkg = "joy" type = "joy_node" name = "joy_node"/>
 
+    <include file = "$(find cyglidar_d1)/launch/cyglidar.launch"/>
+
     <node pkg = "hover_joy" type = "yolo_sub_updating.py" name = "yolo_sub_updating" output = "screen"/>
 
     <node pkg = "hover_joy" type = "joy_sub_updating.py" name = "joy_sub_updating" output = "screen"/>
 
     <node pkg = "hover_joy" type = "lidar_hover_updating.py" name = "lidar_hover" output = "screen"/>
 
-    <node pkg = "hover_joy" type = "cyg_read_updating.py" name = "cyg_read" output = "screen"/>
+    <node pkg = "hover_joy" type = "cyg_sub_updating.py" name = "cyg_read" output = "screen"/>
 
 </launch>
