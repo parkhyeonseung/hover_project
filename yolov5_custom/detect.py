@@ -2,8 +2,8 @@
 # encoding: utf-8
 
 #### import rospy jover_joy.msg 
-import rospy
-from hover_joy.msg import arraymsg
+#import rospy
+#from hover_joy.msg import arraymsg
 #####
 import argparse
 import os
@@ -29,7 +29,7 @@ from utils.torch_utils import select_device, smart_inference_mode
 
 @smart_inference_mode()
 def run(
-        weights=ROOT / 'yolov5s.engine',  # model path or triton URL
+        weights=ROOT / 'yolov5s.pt',  # model path or triton URL
         source='0',  # file/dir/URL/glob/screen/0(webcam)
         data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
         imgsz=(640, 640),  # inference size (height, width)
@@ -183,9 +183,9 @@ if __name__ == "__main__":
     # rospy.init_node('yolo_detect')
     # weights = rospy.get_param('weights','yolov5s.engine')
     # source = rospy.get_param('source','0')
-    if not rospy.is_shutdown():
-        try :
-            main('yolov5s.engine','0')
-        except KeyboardInterrupt:
-            # print('name')
-            raise StopIteration
+#    if not rospy.is_shutdown():
+    try :
+       	main('yolov5s.pt','0')
+    except KeyboardInterrupt:
+        # print('name')
+        raise StopIteration
