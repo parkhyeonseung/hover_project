@@ -58,8 +58,8 @@ def run(
         vid_stride=1,  
 ):
     weights = ROOT / weights
-    pub_yolo = rospy.Publisher('yolo',arraymsg,queue_size=1) ## produce publisher instance
-    yolo_data = arraymsg()  ## produce msg instance
+    # pub_yolo = rospy.Publisher('yolo',arraymsg,queue_size=1) ## produce publisher instance
+    # yolo_data = arraymsg()  ## produce msg instance
     counts_no_cup = 0       ## if cup is none in frame, counts var
     target='cup'            ## target 
     source = str(source)
@@ -145,13 +145,13 @@ def run(
                     label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                     labels+=label
                     if counts_no_cup >=10:
-                        yolo_data.data = [10.,0.,0.,0.]
-                        pub_yolo.publish(yolo_data)
+                        # yolo_data.data = [10.,0.,0.,0.]
+                        # pub_yolo.publish(yolo_data)
                         counts_no_cup =0
                     else:
                         if target in label:
-                            yolo_data.data = xywh
-                            pub_yolo.publish(yolo_data)
+                            # yolo_data.data = xywh
+                            # pub_yolo.publish(yolo_data)
                             counts_no_cup = 0
 
                             if save_crop or view_img:  # Add bbox to image
@@ -180,12 +180,12 @@ def main(weights,source):
         raise StopIteration
 
 if __name__ == "__main__":
-    rospy.init_node('yolo_detect')
-    weights = rospy.get_param('weights','yolov5s.engine')
-    source = rospy.get_param('source','0')
+    # rospy.init_node('yolo_detect')
+    # weights = rospy.get_param('weights','yolov5s.engine')
+    # source = rospy.get_param('source','0')
     if not rospy.is_shutdown():
         try :
-            main(weights,source)
+            main('yolov5s.engine','0')
         except KeyboardInterrupt:
             # print('name')
             raise StopIteration
