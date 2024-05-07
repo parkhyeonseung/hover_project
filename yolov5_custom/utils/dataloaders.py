@@ -340,6 +340,13 @@ class LoadStreams:
     # YOLOv5 streamloader, i.e. `python detect.py --source 'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP streams`
     def __init__(self, sources='streams.txt', img_size=640, stride=32, auto=True, transforms=None, vid_stride=1):
         torch.backends.cudnn.benchmark = True  # faster for fixed-size inference
+        pipeline = " ! ".join(["v4l2src device=/dev/video0",
+                       "video/x-raw, width=640, height=640, framerate=30/1",
+                       "videoconvert",
+                       "video/x-raw, format=(string)BGR",
+                       "appsink"
+                       ])
+
         self.mode = 'stream'
         self.img_size = img_size
         self.stride = stride
@@ -359,7 +366,8 @@ class LoadStreams:
             if s == 0:
                 assert not is_colab(), '--source 0 webcam unsupported on Colab. Rerun command in a local environment.'
                 assert not is_kaggle(), '--source 0 webcam unsupported on Kaggle. Rerun command in a local environment.'
-            cap = cv2.VideoCapture("v4l2src device=/dev/video0 ! image/jpeg,format=MJPG,width=640,height=640,framerate=30/1 ! nvv4l2decoder mjpeg=1 ! nvvidconv ! video/x-raw,format=BGRx ! appsink drop=1", cv2.CAP_GSTREAMER)
+                
+            cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
             assert cap.isOpened(), f'{st}Failed to open {s}'
             w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
