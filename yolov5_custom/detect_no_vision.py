@@ -6,8 +6,8 @@ import os
 import platform
 import sys
 from pathlib import Path
-import rospy
-from hover_joy.msg import arraymsg
+# import rospy
+# from hover_joy.msg import arraymsg
 import torch
 
 FILE = Path(__file__).resolve()
@@ -26,7 +26,7 @@ from utils.torch_utils import select_device, smart_inference_mode
 
 @smart_inference_mode()
 def run(
-        weights=ROOT / 'yolov5s.engine',
+        weights=ROOT / 'yolov5s.pt',
         source='0',  # file/dir/URL/glob/screen/0(webcam)
         project=ROOT / 'runs/detect',
         name='exp',
@@ -55,10 +55,10 @@ def run(
         vid_stride=1,  # video frame-rate stride
 ):
     weights = ROOT / weights
-    yolo_data = []
+    # yolo_data = []
     counts_no_cup = 0
-    pub_yolo = rospy.Publisher('yolo',arraymsg,queue_size=1)
-    yolo_data = arraymsg()
+    # pub_yolo = rospy.Publisher('yolo',arraymsg,queue_size=1)
+    # yolo_data = arraymsg()
 
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
@@ -149,13 +149,13 @@ def run(
                     label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                     labels+=label
                     if counts_no_cup >=10:
-                        yolo_data.data = [10.,0.,0.,0.]
-                        pub_yolo.publish(yolo_data)
+                        # yolo_data.data = [10.,0.,0.,0.]
+                        # pub_yolo.publish(yolo_data)
                         counts_no_cup =0
                     else:
                         if target in label:
-                            yolo_data.data = xywh
-                            pub_yolo.publish(yolo_data)
+                            # yolo_data.data = xywh
+                            # pub_yolo.publish(yolo_data)
                             counts_no_cup = 0
                 # print(yolo_data)
                 if target not in labels:
@@ -172,12 +172,12 @@ def main(weights,source):
 
 
 if __name__ == "__main__":
-    rospy.init_node('yolo_detect')
-    weights = rospy.get_param('weights','yolov5s.engine')
-    source = rospy.get_param('source','0')
-    if not rospy.is_shutdown():
-        try :
-            main(weights,source)
-        except KeyboardInterrupt:
-            # print('name')
-            raise StopIteration
+    # rospy.init_node('yolo_detect')
+    # weights = rospy.get_param('weights','yolov5s.engine')
+    # source = rospy.get_param('source','0')
+    # if not rospy.is_shutdown():
+    try :
+        main('yolov5s.pt','0')
+    except KeyboardInterrupt:
+        # print('name')
+        raise StopIteration
