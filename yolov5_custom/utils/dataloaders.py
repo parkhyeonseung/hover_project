@@ -367,7 +367,26 @@ class LoadStreams:
                 assert not is_colab(), '--source 0 webcam unsupported on Colab. Rerun command in a local environment.'
                 assert not is_kaggle(), '--source 0 webcam unsupported on Kaggle. Rerun command in a local environment.'
                 
-            cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+            # cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+            cv2.VideoCapture((
+                "nvarguscamerasrc ! "
+                "video/x-raw(memory:NVMM), "
+                "width=(int)%d, height=(int)%d, "
+                "format=(string)NV12, framerate=(fraction)%d/1 ! "
+                "nvvidconv flip-method=%d ! "
+                "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
+                "videoconvert ! "
+                "video/x-raw, format=(string)BGR ! appsink "
+                "wait-on-eos=false drop=true max-buffers=1"
+                % (
+                    640,
+                    640,
+                    30/1,
+                    0,
+                    640,
+                    640,
+                )
+                ), cv2.CAP_GSTREAMER)
             assert cap.isOpened(), f'{st}Failed to open {s}'
             w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
