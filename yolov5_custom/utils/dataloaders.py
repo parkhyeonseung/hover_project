@@ -340,13 +340,15 @@ class LoadStreams:
     # YOLOv5 streamloader, i.e. `python detect.py --source 'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP streams`
     def __init__(self, sources='streams.txt', img_size=640, stride=32, auto=True, transforms=None, vid_stride=1):
         torch.backends.cudnn.benchmark = True  # faster for fixed-size inference
-        pipeline = " ! ".join(["v4l2src device=/dev/video0",
-                       "video/x-raw, width=640, height=640, framerate=30/1",
-                       "videoconvert",
-                       "video/x-raw, format=(string)BGR",
-                       "appsink"
-                       ])
-
+        # pipeline = " ! ".join(["v4l2src device=/dev/video0",
+        #                "video/x-raw, width=640, height=640, framerate=30/1",
+        #                "videoconvert",
+        #                "video/x-raw, format=(string)BGR",
+        #                "appsink"
+        #                ])
+        
+        pipeline = "v4l2src device=/dev/video0 ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! nvvidconv ! video/x-raw(memory:NVMM) ! nvvidconv ! video/x-raw, format=BGRx ! appsink drop=1"
+        
         self.mode = 'stream'
         self.img_size = img_size
         self.stride = stride
@@ -368,25 +370,7 @@ class LoadStreams:
                 assert not is_kaggle(), '--source 0 webcam unsupported on Kaggle. Rerun command in a local environment.'
                 
             # cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
-            cv2.VideoCapture((
-                "nvarguscamerasrc ! "
-                "video/x-raw(memory:NVMM), "
-                "width=(int)%d, height=(int)%d, "
-                "format=(string)NV12, framerate=(fraction)%d/1 ! "
-                "nvvidconv flip-method=%d ! "
-                "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
-                "videoconvert ! "
-                "video/x-raw, format=(string)BGR ! appsink "
-                "wait-on-eos=false drop=true max-buffers=1"
-                % (
-                    640,
-                    640,
-                    30/1,
-                    0,
-                    640,
-                    640,
-                )
-                ), cv2.CAP_GSTREAMER)
+            cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
             assert cap.isOpened(), f'{st}Failed to open {s}'
             w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
