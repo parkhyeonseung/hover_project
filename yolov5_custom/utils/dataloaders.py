@@ -347,8 +347,8 @@ class LoadStreams:
         #                "appsink"
         #                ])
         
-        pipeline = "v4l2src device=/dev/video0 ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! nvvidconv ! video/x-raw(memory:NVMM) ! nvvidconv ! video/x-raw, format=BGRx ! appsink drop=1"
-        
+        # pipeline = "v4l2src device=/dev/video0 ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! nvvidconv ! video/x-raw(memory:NVMM) ! nvvidconv ! video/x-raw, format=BGRx ! appsink drop=1"
+        pipeline = "v4l2src device=/dev/video0 io-mode=0 ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! nvvidconv ! video/x-raw(memory:NVMM) ! nvvidconv ! video/x-raw, format=BGRx ! appsink drop=1"
         self.mode = 'stream'
         self.img_size = img_size
         self.stride = stride
